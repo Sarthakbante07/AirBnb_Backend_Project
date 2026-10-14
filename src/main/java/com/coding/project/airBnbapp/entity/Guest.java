@@ -2,12 +2,13 @@ package com.coding.project.airBnbapp.entity;
 
 import com.coding.project.airBnbapp.entity.enums.Gender;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.Set;
 
-@Data
 @Entity
+@Getter
+@Setter
 public class Guest {
 
     @Id

@@ -1,6 +1,7 @@
 package com.coding.project.airBnbapp.dto;
 
 import lombok.Data;
+
 import java.math.BigDecimal;
 
 @Data

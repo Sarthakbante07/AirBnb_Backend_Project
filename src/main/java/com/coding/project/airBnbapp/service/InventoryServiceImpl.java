@@ -1,10 +1,12 @@
 package com.coding.project.airBnbapp.service;
 
 import com.coding.project.airBnbapp.dto.HotelDto;
+import com.coding.project.airBnbapp.dto.HotelPriceDto;
 import com.coding.project.airBnbapp.dto.HotelSearchRequest;
 import com.coding.project.airBnbapp.entity.Hotel;
 import com.coding.project.airBnbapp.entity.Inventory;
 import com.coding.project.airBnbapp.entity.Room;
+import com.coding.project.airBnbapp.repository.HotelMinPriceRepository;
 import com.coding.project.airBnbapp.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,10 +26,12 @@ import java.time.temporal.ChronoUnit;
 public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
     private final ModelMapper modelMapper;
+    private final HotelMinPriceRepository hotelMinPriceRepository;
 
     @Override
     public void intializeRoomForAYear(Room room) {
-        LocalDate today =  LocalDate.now();
+        log.info("Initializing yearly inventory for room id {}", room.getId());
+        LocalDate today = LocalDate.now();
         LocalDate endDate = today.plusYears(1);
 
         for (; !today.isAfter(endDate); today = today.plusDays(1)) {
@@ -35,6 +39,7 @@ public class InventoryServiceImpl implements InventoryService {
                     .hotel(room.getHotel())
                     .room(room)
                     .bookedCount(0)
+                    .reservedCount(0)
                     .city(room.getHotel().getCity())
                     .date(today)
                     .price(room.getBasePrice())
@@ -49,23 +54,25 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public void deleteAllInventory(Room room) {
-        log.info("Delete all inventory of romm with id: {}", room.getId());
+        log.info("Deleting inventory for room id {}", room.getId());
         inventoryRepository.deleteByRoom(room);
     }
 
     @Override
-    public Page<HotelDto> searchHotels(HotelSearchRequest hotelSearchRequest) {
+    public Page<HotelPriceDto> searchHotels(HotelSearchRequest hotelSearchRequest) {
 
-        log.info("Searching for hotels for City from start to end date {}", hotelSearchRequest.getCity() , hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate());
+        log.info("Searching for hotels in city {} from {} to {}",
+                hotelSearchRequest.getCity(), hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate());
 
         Pageable pageable = PageRequest.of(hotelSearchRequest.getPage(), hotelSearchRequest.getSize());
         long dateCount =
-                ChronoUnit.DAYS.between(hotelSearchRequest.getStartDate(),hotelSearchRequest.getEndDate()) +1;
-
-        Page<Hotel> hotelPage = inventoryRepository.findHotelWithAvailableInventory(hotelSearchRequest.getCity(),
+                ChronoUnit.DAYS.between(hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate()) + 1;
+        // business logiv - 90 days
+        Page<HotelPriceDto> hotelPage = hotelMinPriceRepository.findHotelWithAvailableInventory(hotelSearchRequest.getCity(),
                 hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate(), hotelSearchRequest.getRoomsCount(),
-                dateCount, pageable );
+                dateCount, pageable);
 
-        return hotelPage.map((element) -> modelMapper.map(element, HotelDto.class));
+        return hotelPage;
+
     }
 }

@@ -1,5 +1,6 @@
 package com.coding.project.airBnbapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -41,10 +42,11 @@ public class Hotel {
     @Embedded
     private HotelContactInfo contact_info;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     private User owner;
 
     @OneToMany(mappedBy = "hotel")
+    @JsonIgnore
     private List<Room> rooms;
 
 }

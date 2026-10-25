@@ -17,41 +17,46 @@ import java.util.List;
 
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
-     void deleteByRoom(Room room);
+    void deleteByRoom(Room room);
 
-     @Query("""
+    @Query("""
             SELECT DISTINCT i.hotel
             FROM Inventory i
             WHERE i.city = :city
                         AND i.date BETWEEN :startDate AND :endDate
                         AND i.closed = false
-                        AND (i.totalCount - i.bookedCount) >= :roomCount
+                        AND (i.totalCount - i.bookedCount - i.reservedCount) >= :roomCount
             GROUP BY i.hotel, i.room
             HAVING COUNT(i.date) = :dateCount
             """
-            )
-     Page<Hotel> findHotelWithAvailableInventory(
-             @Param("city") String city,
-             @Param("startDate")LocalDate startDate,
-             @Param("endDate") LocalDate endDate,
-             @Param("roomCount") Integer roomsCount,
-             @Param("dateCount") long dateCount,
-             Pageable pageable
-             );
+    )
+    Page<Hotel> findHotelWithAvailableInventory(
+            @Param("city") String city,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("roomCount") Integer roomsCount,
+            @Param("dateCount") long dateCount,
+            Pageable pageable
+    );
 
-     @Query("""
+
+    @Query("""
             SELECT i
             FROM Inventory i
             WHERE i.room.id = :roomId
-                  AND i.date BETWEEN :startDate AND :endDate
+                  AND i.date >= :startDate
+                  AND i.date < :endDate
                   AND i.closed = false
-                  AND (i.totalCount - i.bookedCount) >= :roomCount
+                  AND (i.totalCount - i.bookedCount - i.reservedCount) >= :roomCount
             """)
-     @Lock(LockModeType.PESSIMISTIC_WRITE)
-     List<Inventory> finalAndLockAvailableInventory(
-         @Param("roomId") Long roomId,
-         @Param("startDate") LocalDate startDate,
-         @Param("endDate") LocalDate endDate,
-         @Param("roomCount") Integer roomsCount
-     );
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Inventory> finalAndLockAvailableInventory(
+            @Param("roomId") Long roomId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("roomCount") Integer roomsCount
+    );
+
+    List<Inventory> findByHotelAndDateBetween(Hotel hotel, LocalDate startDate, LocalDate endDate);
+
 }

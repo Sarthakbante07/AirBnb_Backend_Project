@@ -18,32 +18,36 @@ public class HotelController {
 
     @PostMapping
     public ResponseEntity<HotelDto> createNewHotel(@RequestBody HotelDto hotelDto) {
-        log.info("Attempting to create Hotel with Hotel Name: " + hotelDto.getName());
+        log.info("Attempting to create hotel with name {}", hotelDto.getName());
 
         HotelDto hotel = hotelService.createNewHotel(hotelDto);
-        return new ResponseEntity<>(hotel,HttpStatus.CREATED);
+        return new ResponseEntity<>(hotel, HttpStatus.CREATED);
     }
 
     @GetMapping("/{hotelId}")
     public ResponseEntity<HotelDto> getHotelById(@PathVariable Long hotelId) {
-    HotelDto hotel = hotelService.getHotelById(hotelId);
-    return ResponseEntity.ok(hotel);
+        log.info("Fetching hotel id {}", hotelId);
+        HotelDto hotel = hotelService.getHotelById(hotelId);
+        return ResponseEntity.ok(hotel);
     }
 
     @PutMapping("/{hotelId}")
-    public ResponseEntity<HotelDto> updateHotelById(@PathVariable Long hotelId,  @RequestBody HotelDto hotelDto) {
-        HotelDto hotel = hotelService.updateHotelById(hotelId,  hotelDto);
+    public ResponseEntity<HotelDto> updateHotelById(@PathVariable Long hotelId, @RequestBody HotelDto hotelDto) {
+        log.info("Updating hotel id {}", hotelId);
+        HotelDto hotel = hotelService.updateHotelById(hotelId, hotelDto);
         return ResponseEntity.ok(hotel);
     }
 
     @DeleteMapping("/{hotelId}")
     public ResponseEntity<Void> deleteHotelById(@PathVariable Long hotelId) {
+        log.info("Deleting hotel id {}", hotelId);
         hotelService.deleteHotelById(hotelId);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{hotelId}")
     public ResponseEntity<Void> activateHotel(@PathVariable Long hotelId) {
+        log.info("Activating hotel id {}", hotelId);
         hotelService.activateHotel(hotelId);
         return ResponseEntity.noContent().build();
     }

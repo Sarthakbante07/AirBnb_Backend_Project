@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class GuestDto {
-    private long id;
+
     private User user;
     private String name;
     private String gender;

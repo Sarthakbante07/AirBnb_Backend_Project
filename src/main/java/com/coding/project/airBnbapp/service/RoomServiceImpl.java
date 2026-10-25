@@ -3,12 +3,15 @@ package com.coding.project.airBnbapp.service;
 import com.coding.project.airBnbapp.dto.RoomDto;
 import com.coding.project.airBnbapp.entity.Hotel;
 import com.coding.project.airBnbapp.entity.Room;
+import com.coding.project.airBnbapp.entity.User;
 import com.coding.project.airBnbapp.exception.ResourceNotFoundException;
+import com.coding.project.airBnbapp.exception.UnAuthorizeException;
 import com.coding.project.airBnbapp.repository.HotelRepository;
 import com.coding.project.airBnbapp.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,15 +36,20 @@ public class RoomServiceImpl implements RoomService {
                 .findById(HotelId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel Not found With ID: " + HotelId));
 
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!user.equals(hotel.getOwner())) {
+            throw new UnAuthorizeException("Hotel does not belong to the current user, You can not view it");
+        }
+
         Room room = modelMapper.map(roomDto, Room.class);
         room.setHotel(hotel);
         room = roomRepository.save(room);
 
         // TODO : Create inventery as soon as room is created anf if hotel is active.
 
-            if (hotel.getActive()){
-                inventoryService.intializeRoomForAYear(room);
-            }
+        if (hotel.getActive()) {
+            inventoryService.intializeRoomForAYear(room);
+        }
 
         return modelMapper.map(room, RoomDto.class);
     }
@@ -53,6 +61,11 @@ public class RoomServiceImpl implements RoomService {
         Hotel hotel = hotelRepository
                 .findById(hotelId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel Not found With ID: " + hotelId));
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!user.equals(hotel.getOwner())) {
+            throw new UnAuthorizeException("Hotel does not belong to the current user, You can not view it");
+        }
 
         return hotel.getRooms()
                 .stream()
@@ -79,7 +92,10 @@ public class RoomServiceImpl implements RoomService {
         Room room = roomRepository
                 .findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel Not found With ID: " + roomId));
-
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!user.equals(room.getHotel().getOwner())) {
+            throw new UnAuthorizeException("Hotel does not belong to the current user, You can not view it");
+        }
         inventoryService.deleteAllInventory(room);
         roomRepository.deleteById(roomId);
     }
